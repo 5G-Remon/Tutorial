@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5G Games Prototype</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 40px 20px;
+            box-sizing: border-box;
+        }
+        h1 { color: #00ffcc; margin-bottom: 5px; }
+        p { color: #aaaaaa; margin-bottom: 30px; }
+ 
+        .prototype-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            max-width: 400px;
+        }
+ 
+        .prototype-btn {
+            width: 100%;
+            background-color: #2a2a2a;
+            color: #ffffff;
+            font: inherit;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-align: left;
+            padding: 15px 20px;
+            border: 2px solid #3a3a3a;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+        .prototype-btn:hover { border-color: #00ffcc; background-color: #333333; }
+        .prototype-btn:focus-visible { outline: 2px solid #00ffcc; outline-offset: 2px; }
+        .prototype.open .prototype-btn { border-color: #00ffcc; }
+ 
+        .meta { display: flex; align-items: center; gap: 12px; color: #aaaaaa; font-size: 0.85rem; font-weight: normal; }
+        .chevron { transition: transform 0.25s; }
+        .prototype.open .chevron { transform: rotate(180deg); }
+ 
+        .versions {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.25s ease;
+        }
+        .prototype.open .versions { grid-template-rows: 1fr; }
+        .versions-inner { overflow: hidden; }
+        .version-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 10px 0 4px 16px;
+        }
+ 
+        .version-card {
+            background-color: #242424;
+            padding: 12px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #ffffff;
+            font-weight: bold;
+            border: 2px solid #3a3a3a;
+            transition: border-color 0.2s, background-color 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .version-card.has-changes { display: block; }
+        .version-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .version-changes {
+            margin: 10px 0 0;
+            padding: 10px 0 0 18px;
+            border-top: 1px solid #3a3a3a;
+            color: #cccccc;
+            font-weight: normal;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        .version-card:hover { border-color: #00ffcc; background-color: #333333; }
+        .version-card:focus-visible { outline: 2px solid #00ffcc; outline-offset: 2px; }
+ 
+        .tag {
+            font-size: 0.8rem;
+            background-color: #00ffcc;
+            color: #1a1a1a;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+ 
+        @media (prefers-reduced-motion: reduce) {
+            .versions, .chevron { transition: none; }
+        }
+    </style>
+</head>
+<body>
+    <h1>5G Games Prototype</h1>
+    <p>Pick a prototype, then choose a build version to play:</p>
+    <div class="prototype-list" id="prototype-list">Loading...</div>
+ 
+    <script>
+        fetch('./prototypes.json')
+            .then(res => res.json())
+            .then(prototypes => {
+                const container = document.getElementById('prototype-list');
+                container.innerHTML = '';
+ 
+                prototypes.forEach((prototype, index) => {
+                    const section = document.createElement('div');
+                    section.className = 'prototype';
+ 
+                    const panelId = `versions-${index}`;
+
+                    const btn = document.createElement('button');
+                    btn.className = 'prototype-btn';
+                    btn.type = 'button';
+                    btn.setAttribute('aria-expanded', 'false');
+                    btn.setAttribute('aria-controls', panelId);
+ 
+                    const name = document.createElement('span');
+                    name.textContent = prototype.name;
+ 
+                    const meta = document.createElement('span');
+                    meta.className = 'meta';
+                    const count = prototype.versions.length;
+                    meta.innerHTML = `<span>${count} version${count === 1 ? '' : 's'}</span><span class="chevron">▼</span>`;
+ 
+                    btn.appendChild(name);
+                    btn.appendChild(meta);
+ 
+                    // dropdown panel
+                    const panel = document.createElement('div');
+                    panel.className = 'versions';
+                    panel.id = panelId;
+ 
+                    const inner = document.createElement('div');
+                    inner.className = 'versions-inner';
+ 
+                    const list = document.createElement('div');
+                    list.className = 'version-list';
+ 
+                    // newest first
+                    [...prototype.versions].reverse().forEach(v => {
+                        const a = document.createElement('a');
+                        a.className = 'version-card';
+                        a.href = `./prototypes/${prototype.slug}/${v.version}/`;
+ 
+                        const hasChanges = v.changes && v.changes.length > 0;
+
+                        const label = document.createElement('span');
+                        label.textContent = v.version;
+
+                        let tag = null;
+                        if (v.tag) {
+                            tag = document.createElement('span');
+                            tag.className = 'tag';
+                            tag.textContent = v.tag;
+                        }
+
+                        if (hasChanges) {
+                            a.classList.add('has-changes');
+                            const head = document.createElement('div');
+                            head.className = 'version-head';
+                            head.appendChild(label);
+                            if (tag) head.appendChild(tag);
+                            a.appendChild(head);
+
+                            const ul = document.createElement('ul');
+                            ul.className = 'version-changes';
+                            v.changes.forEach(c => {
+                                const li = document.createElement('li');
+                                li.textContent = c;
+                                ul.appendChild(li);
+                            });
+                            a.appendChild(ul);
+                        } else {
+                            a.appendChild(label);
+                            if (tag) a.appendChild(tag);
+                        }
+                        list.appendChild(a);
+                    });
+ 
+                    inner.appendChild(list);
+                    panel.appendChild(inner);
+ 
+                    // open this one, close the others
+                    btn.addEventListener('click', () => {
+                        const willOpen = !section.classList.contains('open');
+                        document.querySelectorAll('.prototype').forEach(s => {
+                            s.classList.remove('open');
+                            s.querySelector('.prototype-btn').setAttribute('aria-expanded', 'false');
+                        });
+                        if (willOpen) {
+                            section.classList.add('open');
+                            btn.setAttribute('aria-expanded', 'true');
+                        }
+                    });
+ 
+                    section.appendChild(btn);
+                    section.appendChild(panel);
+                    container.appendChild(section);
+                });
+            })
+            .catch(() => {
+                document.getElementById('prototype-list').textContent =
+                    'Could not load prototypes.json';
+            });
+    </script>
+</body>
+</html>

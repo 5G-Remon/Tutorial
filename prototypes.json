@@ -1,0 +1,17 @@
+[
+  {
+    "name": "Pinata 2500",
+    "slug": "pinata-2500",
+    "versions": [
+      {
+        "version": "v0.0.0",
+        "tag": "latest",
+        "changes": [
+          "First version (default bet mode only)",
+          "Blablabla",
+          "ABCDEFG"
+        ]
+      }
+    ]
+  }
+]
